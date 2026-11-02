@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10162b">
+  <title>Revelación de rol · Misión espacial</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: rgba(21, 30, 55, .88);
+      --muted: #aab6d2;
+      --crew: #4dd8ee;
+      --impostor: #ff5964;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100svh;
+      overflow-x: hidden;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #f7f9ff;
+      background:
+        radial-gradient(ellipse at 50% 16%, rgba(49, 77, 143, .45), transparent 42%),
+        radial-gradient(ellipse at 85% 88%, rgba(80, 45, 112, .25), transparent 36%),
+        linear-gradient(160deg, #101a35, var(--bg) 65%);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .55;
+      background-image:
+        radial-gradient(2px 2px at 10% 20%, #fff 50%, transparent 60%),
+        radial-gradient(1px 1px at 20% 78%, #b8d9ff 50%, transparent 60%),
+        radial-gradient(2px 2px at 35% 40%, #fff 50%, transparent 60%),
+        radial-gradient(1px 1px at 55% 14%, #fff 50%, transparent 60%),
+        radial-gradient(2px 2px at 70% 70%, #c7dcff 50%, transparent 60%),
+        radial-gradient(1px 1px at 86% 34%, #fff 50%, transparent 60%),
+        radial-gradient(2px 2px at 94% 88%, #fff 50%, transparent 60%);
+      background-size: 420px 360px;
+      animation: drift 35s linear infinite;
+    }
+    @keyframes drift { to { transform: translate3d(-35px, 25px, 0); } }
+    .wrap {
+      position: relative;
+      width: min(100%, 470px);
+      text-align: center;
+      padding: 30px 24px 26px;
+      border: 1px solid rgba(165, 190, 255, .22);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: 0 24px 80px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.06);
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+    }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: #b8c6e8;
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(1.45rem, 6vw, 2rem); letter-spacing: .04em; }
+    .sub { margin: 10px 0 0; color: var(--muted); line-height: 1.45; font-size: .95rem; }
+    .stage {
+      min-height: 255px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      margin: 12px 0 4px;
+    }
+    .orbit {
+      position: absolute;
+      width: 210px;
+      height: 210px;
+      border: 1px solid rgba(138, 170, 255, .23);
+      border-radius: 50%;
+      box-shadow: 0 0 30px rgba(87, 143, 255, .08);
+      animation: orbit 9s linear infinite;
+    }
+    .orbit::before, .orbit::after {
+      content: "";
+      position: absolute;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #d5e5ff;
+      box-shadow: 0 0 12px #9bc5ff;
+    }
+    .orbit::before { top: 22px; left: 28px; }
+    .orbit::after { bottom: 30px; right: 19px; width: 5px; height: 5px; }
+    @keyframes orbit { to { transform: rotate(360deg); } }
+    .astronaut {
+      --suit: var(--crew);
+      position: relative;
+      width: 126px;
+      height: 148px;
+      z-index: 1;
+      transform: translateY(12px);
+      animation: float 2.3s ease-in-out infinite;
+      filter: drop-shadow(0 16px 12px rgba(0,0,0,.32));
+    }
+    .astronaut.impostor { --suit: var(--impostor); }
+    @keyframes float { 0%,100% { transform: translateY(12px) rotate(-2deg); } 50% { transform: translateY(-5px) rotate(2deg); } }
+    .backpack {
+      position: absolute;
+      z-index: 0;
+      width: 42px;
+      height: 77px;
+      left: 2px;
+      top: 50px;
+      border: 5px solid #26354d;
+      border-radius: 15px 9px 12px 15px;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--suit) 72%, #26354d), var(--suit));
+    }
+    .body {
+      position: absolute;
+      z-index: 1;
+      right: 5px;
+      top: 15px;
+      width: 94px;
+      height: 126px;
+      border: 6px solid #26354d;
+      border-radius: 43px 43px 31px 31px;
+      background: linear-gradient(115deg, color-mix(in srgb, var(--suit) 75%, white), var(--suit) 48%, color-mix(in srgb, var(--suit) 72%, #16243e));
+      box-shadow: inset -8px -7px 0 rgba(0,0,0,.12), inset 6px 5px 0 rgba(255,255,255,.13);
+    }
+    .visor {
+      position: absolute;
+      z-index: 2;
+      top: 43px;
+      right: -1px;
+      width: 76px;
+      height: 43px;
+      border: 5px solid #26354d;
+      border-radius: 24px 24px 20px 20px;
+      background: linear-gradient(145deg, #dff8ff 0%, #87c9e8 44%, #477a9f 100%);
+      box-shadow: inset -5px -4px 0 rgba(25,54,80,.22), 0 3px 0 rgba(255,255,255,.13);
+    }
+    .visor::after {
+      content: "";
+      position: absolute;
+      width: 28px; height: 8px;
+      top: 6px; left: 12px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.68);
+      transform: rotate(-17deg);
+    }
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px) scale(.92);
+      transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1);
+    }
+    .ready .reveal { opacity: 1; transform: translateY(0) scale(1); }
+    .role {
+      display: inline-block;
+      margin: 2px 0 0;
+      padding: 10px 18px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      color: var(--crew);
+      font-weight: 950;
+      font-size: clamp(1.25rem, 5.8vw, 1.7rem);
+      letter-spacing: .055em;
+      text-shadow: 0 0 20px currentColor;
+    }
+    .role.impostor { color: var(--impostor); }
+    .instruction { min-height: 48px; margin: 12px auto 0; max-width: 330px; color: #d6def2; line-height: 1.5; }
+    .status { color: #aab8d9; font-size: .86rem; margin: 5px 0 0; }
+    button {
+      margin-top: 20px;
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 22px;
+      color: #111a2b;
+      background: #e8efff;
+      font: inherit;
+      font-weight: 850;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #9babca;
+    }
+    button:active { transform: translateY(3px); box-shadow: 0 2px 0 #9babca; }
+    .hidden-role { display: none; }
+    .error { color: #ffd2d5; background: rgba(255, 89, 100, .12); padding: 15px; border-radius: 14px; margin-top: 24px; }
+    .foot { color: #8593b5; font-size: .72rem; margin: 20px 0 0; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap" id="app" aria-live="polite">
+    <p class="eyebrow">Misión espacial · Acceso de tripulación</p>
+    <h1>IDENTIFICACIÓN</h1>
+    <p class="sub" id="intro">Comprobando tu tarjeta…</p>
+
+    <section id="revealArea" hidden>
+      <div class="stage">
+        <div class="orbit" aria-hidden="true"></div>
+        <div class="astronaut" id="astronaut" aria-hidden="true">
+          <div class="backpack"></div>
+          <div class="body"></div>
+          <div class="visor"></div>
+        </div>
+      </div>
+      <div class="reveal" id="reveal">
+        <div class="role" id="roleLabel">ERES TRIPULANTE</div>
+        <p class="instruction" id="instruction">Ayuda a preparar las frutas. Colabora con la tripulación.</p>
+      </div>
+      <p class="status" id="privacy">Este rol es secreto. No enseñes la pantalla.</p>
+      <button id="hideButton" type="button">Ocultar mi rol</button>
+    </section>
+
+    <section id="hiddenArea" class="hidden-role" hidden>
+      <h2>ROL OCULTO</h2>
+      <p class="sub">Ya puedes devolver el móvil. Recuerda mantener tu identidad en secreto.</p>
+    </section>
+
+    <p class="foot">No cierres ni compartas tu rol con otros jugadores.</p>
+  </main>
+
+  <script>
+    // The role token is generated by generador_qr.html. The XOR obfuscation keeps
+    // the role out of the visible QR URL, but it is not cryptographic protection.
+    const TOKEN_KEY = "MISION-ESPACIAL-QR-2026";
+
+    function decodeRoleToken(token) {
+      try {
+        const base64 = token.replace(/-/g, "+").replace(/_/g, "/");
+        const paddedBase64 = base64 + "=".repeat((4 - base64.length % 4) % 4);
+        const binary = atob(paddedBase64);
+        const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+        const key = new TextEncoder().encode(TOKEN_KEY);
+        const decoded = bytes.map((byte, index) => byte ^ key[index % key.length]);
+        const payload = new TextDecoder().decode(decoded);
+        const match = /^v1\|([CI])\|[a-f0-9]{24}$/i.exec(payload);
+        if (!match) return null;
+        return match[1].toUpperCase() === "I" ? "impostor" : "tripulante";
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // Keep the original 20 codes working for QR cards generated by the first version.
+    const legacyRoles = {
+      "A7K2": "tripulante", "M4P9": "tripulante", "T8C3": "tripulante", "V2N6": "tripulante",
+      "R5D1": "tripulante", "H9Q4": "tripulante", "B3L8": "tripulante", "W6F2": "tripulante",
+      "C1J7": "tripulante", "P8X5": "tripulante", "N4G9": "tripulante", "D7M3": "tripulante",
+      "K2V8": "tripulante", "F9R1": "tripulante", "J5B6": "tripulante", "X3H7": "tripulante",
+      "G8T2": "tripulante",
+      "Z6P4": "impostor", "Q2W9": "impostor", "L7C5": "impostor"
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("c") || "";
+    const role = decodeRoleToken(code) || legacyRoles[code.toUpperCase()];
+    const app = document.getElementById("app");
+    const intro = document.getElementById("intro");
+    const revealArea = document.getElementById("revealArea");
+    const hiddenArea = document.getElementById("hiddenArea");
+    const astronaut = document.getElementById("astronaut");
+    const roleLabel = document.getElementById("roleLabel");
+    const instruction = document.getElementById("instruction");
+    const privacy = document.getElementById("privacy");
+
+    if (!role) {
+      intro.textContent = "No se reconoce esta tarjeta.";
+      const message = document.createElement("p");
+      message.className = "error";
+      message.textContent = "Pide al docente que te facilite otro código QR.";
+      app.insertBefore(message, document.querySelector(".foot"));
+    } else {
+      revealArea.hidden = false;
+      intro.textContent = "Tu identidad se revelará en unos instantes…";
+      window.setTimeout(() => {
+        const isImpostor = role === "impostor";
+        astronaut.classList.toggle("impostor", isImpostor);
+        roleLabel.classList.toggle("impostor", isImpostor);
+        roleLabel.textContent = isImpostor ? "ERES IMPOSTOR" : "ERES TRIPULANTE";
+        instruction.textContent = isImpostor
+          ? "Tu misión es secreta: durante las alarmas, sabotea la preparación sin que te descubran."
+          : "Ayuda a preparar las frutas. Mantente atento a las alarmas y protege la misión. ";
+        privacy.textContent = "Este rol es secreto. No enseñes la pantalla.";
+        intro.textContent = "Identidad confirmada. ¡Que comience la misión!";
+        app.classList.add("ready");
+      }, 1250);
+    }
+
+    document.getElementById("hideButton").addEventListener("click", () => {
+      revealArea.hidden = true;
+      hiddenArea.hidden = false;
+      hiddenArea.classList.remove("hidden-role");
+      intro.textContent = "Identificación completada.";
+      // Retira el código de la barra de direcciones para que no quede visible al devolver el móvil.
+      try { history.replaceState(null, "", window.location.pathname); } catch (_) { /* sin acción */ }
+    });
+  </script>
+</body>
+</html>

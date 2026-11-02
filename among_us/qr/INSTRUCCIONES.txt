@@ -1,0 +1,36 @@
+KIT DE TARJETAS QR — MISIÓN ESPACIAL
+
+CONTENIDO
+- index.html: página móvil que revela de forma animada el rol asignado al escanear un QR.
+- generador_qr.html: página para generar e imprimir 20 tarjetas QR.
+
+REPARTO PREPARADO
+- 17 tripulantes.
+- 3 impostores.
+- Cada tarjeta tiene un código único y opaco. El enlace no contiene las palabras "tripulante" o "impostor".
+
+PASOS DE USO
+1. Publica index.html y generador_qr.html en el mismo alojamiento web estático con HTTPS (por ejemplo, GitHub Pages, Netlify o similar).
+2. Abre generador_qr.html desde esa web.
+3. En el campo de dirección, introduce la URL pública de index.html. Por ejemplo: https://usuario.github.io/among-us-roles/
+4. Pulsa "Generar 20 códigos QR" y después "Imprimir tarjetas".
+5. Recorta las tarjetas, mézclalas y entrega una a cada participante boca abajo.
+6. Cada alumno escanea su tarjeta con la cámara del móvil. Se abrirá una página con una breve animación y su rol.
+7. Al terminar de leerlo, pulsa "Ocultar mi rol" y devuelve el móvil sin enseñar la pantalla.
+
+PRUEBA ANTES DE LA SESIÓN
+- Para probar un tripulante, abre la página con ?c=A7K2 al final de la dirección.
+- Para probar un impostor, abre la página con ?c=Z6P4 al final de la dirección.
+
+IMPORTANTE
+- Los QR solo funcionarán cuando index.html esté publicado en una dirección HTTPS accesible desde los móviles.
+- El generador de QR necesita internet para cargar QRCode.js desde cdnjs.
+- La animación del rol funciona sin audio para que la identidad no se revele al resto.
+- El docente debe repartir una tarjeta por alumno y pedir que no intercambien ni vuelvan a escanear las tarjetas.
+- Los roles están fijados en 17 tripulantes y 3 impostores. Si quieres cambiar el reparto, hay que actualizar los códigos y roles tanto en index.html como en generador_qr.html.
+- Las tarjetas QR no muestran el rol impreso. Los enlaces utilizan códigos opacos.
+
+SEGURIDAD Y PRIVACIDAD
+- No se solicita nombre, correo, ubicación ni ningún dato personal.
+- No hay seguimiento ni almacenamiento de respuestas.
+- En el juego físico, los alumnos deben permanecer quietos durante los momentos de sabotaje; no se recomienda correr con los ojos tapados.

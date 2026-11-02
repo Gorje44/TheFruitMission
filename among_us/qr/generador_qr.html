@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generador de tarjetas QR · Misión espacial</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root { color-scheme: light; }
+    body {
+      margin: 0;
+      padding: 24px;
+      color: #17213a;
+      background: #eef2f9;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .tools {
+      max-width: 900px;
+      margin: 0 auto 24px;
+      padding: 24px;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 8px 30px rgba(20,35,70,.08);
+    }
+    h1 { margin: 0 0 8px; font-size: 1.65rem; }
+    p { line-height: 1.5; }
+    .intro { margin: 0 0 18px; color: #52617c; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .field { min-width: 0; }
+    label { display: block; margin: 16px 0 7px; font-weight: 750; }
+    .field label { margin-top: 0; }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #bac6dc;
+      border-radius: 10px;
+      font: inherit;
+      background: #fff;
+    }
+    input:focus { outline: 3px solid rgba(57,116,220,.18); border-color: #3974dc; }
+    .url-field { margin-top: 18px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    button {
+      padding: 11px 17px;
+      border: 0;
+      border-radius: 10px;
+      background: #18284d;
+      color: white;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.secondary { background: #dce5f5; color: #18284d; }
+    .note { color: #52617c; font-size: .91rem; }
+    #error { color: #a12332; font-weight: 650; }
+    #printButton { display: none; }
+    #summary { display: none; margin: 14px 0 0; padding: 12px 14px; border-radius: 10px; background: #edf5ff; color: #1d416e; font-weight: 650; }
+    .sheet { max-width: 900px; margin: 0 auto; }
+    .print-page {
+      --cols: 2;
+      --rows: 4;
+      display: grid;
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+      grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 12px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 18px rgba(20,35,70,.07);
+      aspect-ratio: 194 / 281;
+    }
+    .qr-card {
+      min-width: 0;
+      min-height: 0;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      text-align: center;
+      background: white;
+      border: 1px solid #aab7cd;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .qr-card h2 { margin: 0; color: #18284d; font-size: clamp(.65rem, 1.5vw, .9rem); letter-spacing: .07em; }
+    .qr-card .qr { width: min(68%, 55mm); aspect-ratio: 1; display: grid; place-items: center; flex: 0 1 auto; }
+    .qr-card .qr img, .qr-card .qr canvas { display: block; width: 100% !important; height: 100% !important; image-rendering: pixelated; }
+    .qr-card p { margin: 4px 0 0; color: #596781; font-size: clamp(.55rem, 1.1vw, .72rem); line-height: 1.2; }
+    @media (max-width: 700px) {
+      body { padding: 12px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .print-page { gap: 6px; padding: 6px; }
+      .qr-card { padding: 5px; }
+    }
+    @page { size: A4 portrait; margin: 8mm; }
+    @media print {
+      html, body { width: auto; margin: 0; padding: 0; background: white; }
+      body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .tools { display: none !important; }
+      .sheet { width: 194mm; max-width: none; margin: 0; }
+      .print-page {
+        width: 194mm;
+        height: 281mm;
+        margin: 0;
+        padding: 0;
+        gap: 2.5mm;
+        border-radius: 0;
+        box-shadow: none;
+        aspect-ratio: auto;
+        break-after: page;
+        page-break-after: always;
+      }
+      .print-page:last-child { break-after: auto; page-break-after: auto; }
+      .qr-card {
+        height: 100%;
+        padding: 2mm;
+        border: .3mm solid #777;
+        border-radius: 2mm;
+      }
+      .qr-card h2 { font-size: 8pt; }
+      .qr-card .qr { width: min(68%, 55mm); max-width: 55mm; }
+      .qr-card p { font-size: 6.5pt; }
+    }
+  </style>
+</head>
+<body>
+  <section class="tools">
+    <h1>Tarjetas QR · Misión espacial</h1>
+    <p class="intro">Configura los roles y la distribución de las tarjetas. Los QR se mezclan automáticamente y no muestran el papel asignado.</p>
+
+    <div class="url-field">
+      <label for="siteUrl">Dirección HTTPS de la página de revelación (<code>index.html</code>)</label>
+      <input id="siteUrl" type="url" placeholder="https://tuusuario.github.io/among-us-roles/" autocomplete="url">
+    </div>
+
+    <div class="form-grid" style="margin-top:18px">
+      <div class="field">
+        <label for="crewCount">Número de tripulantes</label>
+        <input id="crewCount" type="number" min="0" max="20" step="1" value="17" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="impostorCount">Número de impostores</label>
+        <input id="impostorCount" type="number" min="0" max="20" step="1" value="3" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="perPage">QR por página del PDF</label>
+        <input id="perPage" type="number" min="1" max="20" step="1" value="8" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="generateButton" type="button">Generar tarjetas QR</button>
+      <button id="printButton" class="secondary" type="button">Imprimir / Guardar como PDF</button>
+    </div>
+    <p id="summary" aria-live="polite"></p>
+    <p class="note">Para 20 participantes, la suma de tripulantes e impostores debe ser 20. Puedes cambiar el reparto según el tamaño del grupo. La impresión está preparada para A4 vertical; en el diálogo del navegador selecciona «Guardar como PDF», escala 100 % y desactiva encabezados y pies de página.</p>
+    <p class="note">El generador necesita conexión a internet para cargar la biblioteca que dibuja los códigos QR. Publica primero <code>index.html</code> en una dirección HTTPS.</p>
+    <p id="error" role="alert"></p>
+  </section>
+
+  <main class="sheet" id="sheet" aria-label="Tarjetas QR para imprimir">
+    <div id="qrPages"></div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    // Keep this key and payload format in sync with index.html.
+    // This is obfuscation for a classroom game, not cryptographic protection.
+    const TOKEN_KEY = "MISION-ESPACIAL-QR-2026";
+    const generateButton = document.getElementById("generateButton");
+    const printButton = document.getElementById("printButton");
+    const siteUrlInput = document.getElementById("siteUrl");
+    const crewCountInput = document.getElementById("crewCount");
+    const impostorCountInput = document.getElementById("impostorCount");
+    const perPageInput = document.getElementById("perPage");
+    const qrPages = document.getElementById("qrPages");
+    const error = document.getElementById("error");
+    const summary = document.getElementById("summary");
+
+    function randomHex(byteCount = 12) {
+      const bytes = new Uint8Array(byteCount);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    function encodeRoleToken(role) {
+      const marker = role === "impostor" ? "I" : "C";
+      const payload = new TextEncoder().encode(`v1|${marker}|${randomHex()}`);
+      const key = new TextEncoder().encode(TOKEN_KEY);
+      const obfuscated = payload.map((byte, index) => byte ^ key[index % key.length]);
+      let binary = "";
+      obfuscated.forEach(byte => { binary += String.fromCharCode(byte); });
+      return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    }
+
+    function shuffle(items) {
+      for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+      return items;
+    }
+
+    function getGrid(perPage) {
+      // A4 portrait printable area: 194 mm × 281 mm.
+      // Choose a grid close to a readable card shape while avoiding excessive empty cells.
+      let best = { cols: 1, rows: perPage, score: Infinity };
+      for (let cols = 1; cols <= 4; cols++) {
+        const rows = Math.ceil(perPage / cols);
+        const cardAspect = (194 / cols) / (281 / rows);
+        const emptyCells = cols * rows - perPage;
+        const score = Math.abs(Math.log(cardAspect / 0.88)) + emptyCells * 0.12;
+        if (score < best.score) best = { cols, rows, score };
+      }
+      return best;
+    }
+
+    function createCard(url, cardNumber) {
+      const card = document.createElement("article");
+      card.className = "qr-card";
+
+      const heading = document.createElement("h2");
+      heading.textContent = "MISIÓN ESPACIAL";
+
+      const qr = document.createElement("div");
+      qr.className = "qr";
+      qr.setAttribute("aria-label", `Código QR de la tarjeta ${cardNumber}`);
+
+      const caption = document.createElement("p");
+      caption.textContent = `TARJETA ${String(cardNumber).padStart(2, "0")} · ESCANEA EN PRIVADO`;
+      card.append(heading, qr, caption);
+
+      new QRCode(qr, {
+        text: url,
+        width: 320,
+        height: 320,
+        colorDark: "#10182b",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.Q
+      });
+      return card;
+    }
+
+    generateButton.addEventListener("click", () => {
+      error.textContent = "";
+      summary.style.display = "none";
+      qrPages.innerHTML = "";
+      printButton.style.display = "none";
+
+      if (typeof QRCode === "undefined") {
+        error.textContent = "No se ha podido cargar el generador de QR. Comprueba la conexión a internet y vuelve a intentarlo.";
+        return;
+      }
+
+      let base;
+      try {
+        base = new URL(siteUrlInput.value.trim());
+        if (base.protocol !== "https:") throw new Error("https");
+        base.search = "";
+        base.hash = "";
+      } catch (_) {
+        error.textContent = "Introduce una dirección completa que empiece por https:// y que apunte a index.html o a su carpeta.";
+        return;
+      }
+
+      const crewCount = Number(crewCountInput.value);
+      const impostorCount = Number(impostorCountInput.value);
+      const perPage = Number(perPageInput.value);
+      if (!Number.isInteger(crewCount) || crewCount < 0 || crewCount > 20 ||
+          !Number.isInteger(impostorCount) || impostorCount < 0 || impostorCount > 20) {
+        error.textContent = "Introduce cantidades enteras entre 0 y 20 para cada rol.";
+        return;
+      }
+      const total = crewCount + impostorCount;
+      if (total < 1 || total > 20) {
+        error.textContent = "La suma de tripulantes e impostores debe estar entre 1 y 20.";
+        return;
+      }
+      if (impostorCount === 0 || crewCount === 0) {
+        error.textContent = "Para jugar a Among Us debe haber al menos un tripulante y un impostor.";
+        return;
+      }
+      if (!Number.isInteger(perPage) || perPage < 1 || perPage > 20) {
+        error.textContent = "Indica entre 1 y 20 códigos QR por página.";
+        return;
+      }
+
+      let assignments = [
+        ...Array(crewCount).fill("tripulante"),
+        ...Array(impostorCount).fill("impostor")
+      ];
+      shuffle(assignments);
+
+      const grid = getGrid(perPage);
+      const pageCount = Math.ceil(total / perPage);
+      for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+        const page = document.createElement("section");
+        page.className = "print-page";
+        page.style.setProperty("--cols", grid.cols);
+        page.style.setProperty("--rows", grid.rows);
+        page.setAttribute("aria-label", `Página ${pageIndex + 1} de ${pageCount}`);
+
+        const firstIndex = pageIndex * perPage;
+        const pageAssignments = assignments.slice(firstIndex, firstIndex + perPage);
+        pageAssignments.forEach((role, localIndex) => {
+          const cardNumber = firstIndex + localIndex + 1;
+          const target = new URL(base.href);
+          target.searchParams.set("c", encodeRoleToken(role));
+          page.appendChild(createCard(target.href, cardNumber));
+        });
+        qrPages.appendChild(page);
+      }
+
+      summary.textContent = `${total} tarjetas generadas: ${crewCount} tripulantes y ${impostorCount} impostores. Se imprimirán en ${pageCount} página${pageCount === 1 ? "" : "s"} A4 (${perPage} QR por página, salvo la última si queda incompleta).`;
+      summary.style.display = "block";
+      printButton.style.display = "inline-block";
+    });
+
+    printButton.addEventListener("click", () => window.print());
+  </script>
+</body>
+</html>

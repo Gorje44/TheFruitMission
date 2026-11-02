@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fruit Ninja · Control de juego</title>
+<style>
+:root{--bg:#101522;--panel:#1b2435;--panel2:#242f44;--text:#f5f7fb;--muted:#aab5c8;--accent:#ffb52e;--green:#50d890;--red:#ff5d68}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#273651 0,#101522 55%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+main{max-width:1100px;margin:auto;padding:24px 18px 50px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:clamp(1.8rem,4vw,3rem);margin:0}.subtitle{color:var(--muted);margin:6px 0 22px}
+.panel{background:rgba(27,36,53,.96);border:1px solid #39465d;border-radius:18px;padding:18px;margin:16px 0;box-shadow:0 12px 32px #0003}
+h2{font-size:1.2rem;margin:0 0 12px}.fruits{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.fruit{display:flex;align-items:center;gap:10px;background:var(--panel2);padding:12px;border-radius:12px}.swatch{width:20px;height:20px;border-radius:50%;border:2px solid #ffffff80;flex:none}
+.small{font-size:.88rem;color:var(--muted)}button,select,input{font:inherit}button{border:0;border-radius:10px;padding:10px 15px;font-weight:750;cursor:pointer;background:var(--accent);color:#222}button.secondary{background:#39465d;color:var(--text)}button.danger{background:#b72d43;color:white}button.good{background:#168a5b;color:white}button:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.builder{display:grid;grid-template-columns:minmax(160px,1fr) 140px auto;gap:10px;align-items:end}
+label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:5px}select,input{width:100%;background:#111a29;color:var(--text);border:1px solid #53627b;border-radius:9px;padding:10px}
+.sequence{display:flex;flex-direction:column;gap:8px;margin-top:14px}.entry{display:grid;grid-template-columns:36px 1fr 110px auto;gap:10px;align-items:center;background:#111a29;border:1px solid #3a4961;border-radius:11px;padding:9px 11px}.entry .swatch{width:16px;height:16px}
+.entry button{padding:6px 10px}.empty{padding:18px;border:1px dashed #53627b;border-radius:12px;color:var(--muted);text-align:center}
+[hidden]{display:none !important}
+#launch{display:none;text-align:center;min-height:65vh;align-items:center;justify-content:center;flex-direction:column;gap:24px}
+#launch:not([hidden]){display:flex}
+#launch button{font-size:clamp(1.8rem,5vw,3.2rem);padding:26px 56px;border-radius:18px;box-shadow:0 10px 30px #0005}
+#game{display:none;text-align:center;padding:24px 16px;min-height:420px;position:relative;overflow:hidden}
+#phaseTag{color:var(--accent);font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+#itemEmoji{display:block;width:100%;font-size:clamp(5rem,17vw,10rem);line-height:1.2;margin:12px}
+#itemName{display:block;width:100%;font-size:clamp(2rem,6vw,3.6rem);font-weight:900;margin:0}
+#coneLabel{display:block;width:100%;font-size:1.1rem;color:var(--muted);margin:10px 0}
+.timer{font-size:clamp(3.5rem,12vw,6rem);font-weight:900;font-variant-numeric:tabular-nums;margin:8px}
+.track{height:14px;background:#0c1220;border-radius:20px;overflow:hidden;max-width:600px;margin:12px auto 20px}.fill{height:100%;width:100%;background:var(--green);transition:width .1s linear}
+#game.bomb{border-color:#ff4757;background:radial-gradient(ellipse,#57202a,#241a2a 70%)}#game.bomb .timer{color:#ff6570}#game.paused{border-color:#ff6570}
+    #game:not([hidden]) {
+        display: block;
+    }
+.instructions{max-width:650px;margin:10px auto 18px;color:#d2d9e5;font-size:1.05rem}
+#status{color:var(--muted);margin-top:10px}.footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:22px}
+@media(max-width:620px){main{padding:16px 12px}.builder{grid-template-columns:1fr 110px}.builder button{grid-column:1/-1}.entry{grid-template-columns:28px 1fr auto}.entry .duration{grid-column:2}.entry .actions{grid-column:3;grid-row:1/3;display:flex;flex-direction:column}}
+</style>
+</head>
+<body>
+<main>
+ <div class="top"><div><h1>🍉 FRUIT NINJA</h1><div class="subtitle">Panel de control del juego · Secuencias, cuenta atrás y bomba</div></div><div class="row"><button class="secondary" id="fullscreenBtn" type="button">⛶ Pantalla completa</button><button class="secondary" id="soundTest">Probar sonidos</button></div></div>
+ <section class="panel" id="setup">
+  <h2>1. Frutas y colores de los conos</h2>
+  <div class="fruits" id="fruitLegend"></div>
+  <p class="small">Cada fruta corresponde a un único color de cono. La bomba no representa una fruta y tiene su propia alarma.</p>
+ </section>
+ <section class="panel" id="editor">
+  <h2>2. Diseña la secuencia</h2>
+  <div class="builder">
+   <div><label for="itemSelect">Elemento que aparecerá</label><select id="itemSelect"></select></div>
+   <div><label for="duration">Duración (segundos)</label><input id="duration" type="number" min="1" max="300" value="8"></div>
+   <button id="add">Añadir a la secuencia</button>
+  </div>
+  <div class="row" style="justify-content:space-between;margin-top:18px"><strong>Orden de aparición</strong><span class="small" id="count">0 elementos</span></div>
+  <div class="sequence" id="sequence"><div class="empty">Todavía no has añadido elementos.</div></div>
+  <div class="row" style="margin-top:16px"><button id="load" disabled>▣ Cargar secuencia</button><button class="secondary" id="example">Cargar ejemplo</button><button class="secondary" id="clear">Vaciar secuencia</button></div>
+  <p class="small">Puedes mezclar frutas y bombas, cambiar su duración y modificar el orden antes de cargarla. Al cargarla, el orden queda oculto en pantalla.</p>
+ </section>
+ <section class="panel" id="launch" hidden>
+  <h2>La secuencia está preparada</h2>
+  <p class="small">Pulsa cuando quieras comenzar el juego. También puedes usar la barra espaciadora.</p>
+  <button id="start">▶ INICIAR SECUENCIA</button>
+ </section>
+ <section class="panel" id="game" hidden>
+  <div id="phaseTag">SIGUIENTE ELEMENTO</div>
+  <div id="itemEmoji">🍎</div><h2 id="itemName">Manzana</h2><div id="coneLabel"></div>
+  <div class="timer" id="timer">00:08</div><div class="track"><div class="fill" id="fill"></div></div>
+  <div class="instructions" id="instructions"></div>
+  <div class="row" style="justify-content:center" id="gameButtons"></div>
+  <div class="small" id="keyboardHint">Pulsa la barra espaciadora para activar el botón disponible.</div>
+  <div id="status"></div>
+ </section>
+ <div class="footer">Consejo: conecta el ordenador a los altavoces y pulsa «Probar sonidos» antes de empezar.</div>
+</main>
+<script>
+const fruits=[
+ {id:"apple",name:"Manzana",emoji:"🍎",color:"#e53945",cone:"Rojo"},
+ {id:"banana",name:"Plátano",emoji:"🍌",color:"#f5d328",cone:"Amarillo"},
+ {id:"kiwi",name:"Kiwi",emoji:"🥝",color:"#54b85b",cone:"Verde"},
+ {id:"orange",name:"Naranja",emoji:"🍊",color:"#ff922e",cone:"Naranja"},
+ {id:"grapes",name:"Uvas",emoji:"🍇",color:"#9164d8",cone:"Morado"}
+];
+const bomb={id:"bomb",name:"Bomba",emoji:"💣",color:"#080a0f",cone:"Negro"};
+let sequence=[],index=0,remaining=0,total=0,lastTick=0,raf=null,state="idle",audioCtx=null,lastCountdown=-1;
+const $=id=>document.getElementById(id);
+const itemById=id=>id==="bomb"?bomb:fruits.find(f=>f.id===id);
+function activateCurrentAction(){
+ if(!$("launch").hidden){$("start").click();return}
+ const button=$("gameButtons").querySelector("button:not(:disabled)");
+ if(button && !$("game").hidden)button.click();
+}
+function renderLegend(){
+ $("fruitLegend").innerHTML=fruits.map(f=>`<div class="fruit"><span class="swatch" style="background:${f.color}"></span><div><strong>${f.emoji} ${f.name}</strong><div class="small">Cono ${f.cone.toLowerCase()}</div></div></div>`).join("")+
+ `<div class="fruit"><span class="swatch" style="background:${bomb.color}"> </span><div><strong>💣 Bomba</strong><div class="small">No corresponde a ningún cono</div></div></div>`;
+ $("itemSelect").innerHTML=fruits.map(f=>`<option value="${f.id}">${f.emoji} ${f.name} · cono ${f.cone}</option>`).join("")+`<option value="bomb">💣 Bomba</option>`;
+}
+function renderSequence(){
+ $("count").textContent=`${sequence.length} ${sequence.length===1?"elemento":"elementos"}`;
+ $("load").disabled=!sequence.length;
+ if(!sequence.length){$("sequence").innerHTML='<div class="empty">Todavía no has añadido elementos.</div>';return}
+ $("sequence").innerHTML=sequence.map((e,i)=>{const f=itemById(e.id);return `<div class="entry"><strong>${i+1}.</strong><div><span class="swatch" style="display:inline-block;vertical-align:middle;background:${f.color}"></span> <strong>${f.emoji} ${f.name}</strong><div class="small">${f.id==="bomb"?"Alarma especial":`Cono ${f.cone}`}</div></div><div class="duration"><label>Segundos</label><input aria-label="Duración del elemento ${i+1}" type="number" min="1" max="300" value="${e.duration}" data-duration="${i}"></div><div class="actions"><button class="secondary" data-up="${i}" ${i===0?"disabled":""}>↑</button> <button class="secondary" data-down="${i}" ${i===sequence.length-1?"disabled":""}>↓</button> <button class="danger" data-remove="${i}">×</button></div></div>`}).join("");
+ $("sequence").querySelectorAll("[data-duration]").forEach(el=>el.addEventListener("change",()=>{sequence[+el.dataset.duration].duration=Math.max(1,Math.min(300,+el.value||1));el.value=sequence[+el.dataset.duration].duration}));
+ $("sequence").querySelectorAll("[data-up]").forEach(el=>el.addEventListener("click",()=>move(+el.dataset.up,-1)));
+ $("sequence").querySelectorAll("[data-down]").forEach(el=>el.addEventListener("click",()=>move(+el.dataset.down,1)));
+ $("sequence").querySelectorAll("[data-remove]").forEach(el=>el.addEventListener("click",()=>{sequence.splice(+el.dataset.remove,1);renderSequence()}));
+}
+function move(i,d){[sequence[i],sequence[i+d]]=[sequence[i+d],sequence[i]];renderSequence()}
+function audio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume();return audioCtx}
+function tone(freq,duration,type="sine",volume=.16,delay=0){try{const c=audio(),o=c.createOscillator(),g=c.createGain(),t=c.currentTime+delay;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(volume,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+duration+.03)}catch(e){}}
+function alarm(){tone(740,.22,"sawtooth",.18);tone(520,.25,"sawtooth",.18,.28);tone(740,.22,"sawtooth",.18,.58)}
+function bell(){tone(880,.55,"sine",.2);tone(1320,.65,"sine",.12,.12)}
+function boom(){tone(95,.9,"sawtooth",.28);tone(55,1.1,"triangle",.24,.06)}
+function speak(text){if(!("speechSynthesis"in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="es-ES";u.rate=.94;u.pitch=1;window.speechSynthesis.speak(u)}
+function formatTime(s){s=Math.max(0,s);return `00:${String(Math.ceil(s)).padStart(2,"0")}`}
+function showGame(){ $("launch").hidden=true;$("game").hidden=false;window.scrollTo({top:0,behavior:"smooth"})}
+function loadSequence(){if(!sequence.length)return;state="ready";$("setup").style.display="none";$("editor").style.display="none";$("soundTest").style.display="none";$("game").hidden=true;$("launch").hidden=false;window.scrollTo({top:0,behavior:"smooth"})}
+function showSetup(){ $("game").hidden=true;$("launch").hidden=true;$("setup").style.display="block";$("editor").style.display="block";$("soundTest").style.display="inline-block";state="idle";if(raf)cancelAnimationFrame(raf)}
+function startSequence(){audio();index=0;state="running";showGame();showCurrent()}
+function showCurrent(){
+ if(index>=sequence.length){finish();return}
+ const e=sequence[index],f=itemById(e.id);total=e.duration;remaining=total;lastTick=performance.now();lastCountdown=-1;
+ $("game").classList.toggle("bomb",e.id==="bomb");$("game").classList.remove("paused");
+ $("phaseTag").textContent=e.id==="bomb"?"⚠ PELIGRO · BOMBA":"FRUTA A RECOGER";
+ $("itemEmoji").textContent=f.emoji;$("itemName").textContent=f.name;
+ $("coneLabel").textContent=`Cono ${f.cone.toLowerCase()}`;
+ $("instructions").textContent=e.id==="bomb"?"¡BOMBA! Busca el cono negro y pulsa «Desarmar bomba» antes de que termine el tiempo. Si explota, los equipos que no la desarmen deberán vaciar su bolsa de frutas.":`¡A recoger ${f.name.toLowerCase()}! Busca los conos de color ${f.cone.toLowerCase()}.`;
+ $("status").textContent=`Elemento ${index+1} de ${sequence.length}`;
+ $("gameButtons").innerHTML=e.id==="bomb"?'<button class="good" id="defuse">✓ DESARMAR BOMBA</button>':'<button class="secondary" id="skip">Saltar elemento</button>';
+ if(e.id==="bomb"){alarm();speak("Bomba")}else{speak(f.name)}
+ $("defuse")?.addEventListener("click",()=>{if(state!=="running")return;bell();advance()});
+ $("skip")?.addEventListener("click",()=>{if(state!=="running")return;advance()});
+ updateTimer();if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(tick);
+}
+function updateTimer(){$("timer").textContent=formatTime(remaining);$("fill").style.width=`${Math.max(0,remaining/total*100)}%`;$("fill").style.background=sequence[index]?.id==="bomb"?"#ff5362":"#50d890"}
+function tick(now){
+ if(state!=="running")return;
+ const elapsed=(now-lastTick)/1000;
+ remaining=Math.max(0,remaining-elapsed);lastTick=now;updateTimer();
+ const countdownNumber=Math.ceil(remaining);
+ if(countdownNumber<=5 && countdownNumber>=1 && countdownNumber!==lastCountdown){
+  lastCountdown=countdownNumber;
+  speak(["","Uno","Dos","Tres","Cuatro","Cinco"][countdownNumber]);
+ }
+ if(remaining<=0){timeExpired();return}
+ raf=requestAnimationFrame(tick)
+}
+function timeExpired(){state="waiting";if(raf)cancelAnimationFrame(raf);const e=sequence[index];if(e.id==="bomb"){boom();$("game").classList.add("paused");$("phaseTag").textContent="💥 ¡BOOM! · BOMBA SIN DESARMAR";$("itemEmoji").textContent="💥";$("itemName").textContent="¡BOMBA EXPLOTADA!";$("instructions").textContent="Los equipos que no hayan desarmado la bomba deben vaciar su bolsa de frutas. Cuando estén preparados, pulsa el botón para continuar."; $("gameButtons").innerHTML='<button id="continue" class="good">Continuar secuencia</button>'; $("status").textContent="Secuencia pausada · esperando al profesor";$("continue").addEventListener("click",()=>{bell();advance()})}else{bell();advance()}}
+function advance(){if(raf)cancelAnimationFrame(raf);index++;state="running";showCurrent()}
+function finish(){state="done";$("game").classList.remove("bomb","paused");$("phaseTag").textContent="SECUENCIA COMPLETADA";$("itemEmoji").textContent="🏆";$("itemName").textContent="¡Buen trabajo!";$("coneLabel").textContent="";$("timer").textContent="00:00";$("fill").style.width="0%";$("instructions").textContent="Habéis completado toda la secuencia."; $("gameButtons").innerHTML='<button id="back" class="good">Volver a la configuración</button>'; $("status").textContent="";bell();$("back").addEventListener("click",showSetup)}
+$("fullscreenBtn").addEventListener("click",async()=>{
+ try{
+  if(!document.fullscreenElement)await document.documentElement.requestFullscreen();
+  else await document.exitFullscreen();
+ }catch(e){$("status").textContent="No se ha podido activar la pantalla completa."}
+});
+document.addEventListener("keydown",event=>{
+ if(event.code!=="Space"||event.repeat||event.ctrlKey||event.altKey||event.metaKey)return;
+ const target=event.target;
+ if(target instanceof HTMLElement&&(target.isContentEditable||["INPUT","SELECT","TEXTAREA","BUTTON"].includes(target.tagName)))return;
+ if($("game").hidden&&$("launch").hidden)return;
+ event.preventDefault();
+ activateCurrentAction();
+});
+$("add").addEventListener("click",()=>{sequence.push({id:$("itemSelect").value,duration:Math.max(1,Math.min(300,+$("duration").value||8))});renderSequence()});
+$("load").addEventListener("click",loadSequence);$("start").addEventListener("click",startSequence);
+$("clear").addEventListener("click",()=>{sequence=[];renderSequence()});
+$("example").addEventListener("click",()=>{sequence=[{id:"apple",duration:8},{id:"banana",duration:8},{id:"bomb",duration:7},{id:"kiwi",duration:9},{id:"orange",duration:8},{id:"grapes",duration:8}];renderSequence()});
+$("soundTest").addEventListener("click",()=>{audio();speak("Manzana");setTimeout(alarm,900);setTimeout(bell,2100);setTimeout(boom,3200)});
+renderLegend();renderSequence();
+</script>
+</body>
+</html>
