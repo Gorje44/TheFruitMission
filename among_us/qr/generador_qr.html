@@ -143,15 +143,15 @@
     <div class="form-grid" style="margin-top:18px">
       <div class="field">
         <label for="crewCount">Número de tripulantes</label>
-        <input id="crewCount" type="number" min="0" max="20" step="1" value="17" inputmode="numeric">
+        <input id="crewCount" type="number" min="0" step="1" value="17" inputmode="numeric">
       </div>
       <div class="field">
         <label for="impostorCount">Número de impostores</label>
-        <input id="impostorCount" type="number" min="0" max="20" step="1" value="3" inputmode="numeric">
+        <input id="impostorCount" type="number" min="0" step="1" value="3" inputmode="numeric">
       </div>
       <div class="field">
         <label for="perPage">QR por página del PDF</label>
-        <input id="perPage" type="number" min="1" max="20" step="1" value="8" inputmode="numeric">
+        <input id="perPage" type="number" min="1" step="1" value="8" inputmode="numeric">
       </div>
     </div>
 
@@ -160,7 +160,7 @@
       <button id="printButton" class="secondary" type="button">Imprimir / Guardar como PDF</button>
     </div>
     <p id="summary" aria-live="polite"></p>
-    <p class="note">Para 20 participantes, la suma de tripulantes e impostores debe ser 20. Puedes cambiar el reparto según el tamaño del grupo. La impresión está preparada para A4 vertical; en el diálogo del navegador selecciona «Guardar como PDF», escala 100 % y desactiva encabezados y pies de página.</p>
+    <p class="note">Puedes generar tantos participantes como necesites; la suma de tripulantes e impostores determina el total de tarjetas. La impresión está preparada para A4 vertical; en el diálogo del navegador selecciona «Guardar como PDF», escala 100 % y desactiva encabezados y pies de página.</p>
     <p class="note">El generador necesita conexión a internet para cargar la biblioteca que dibuja los códigos QR. Publica primero <code>index.html</code> en una dirección HTTPS.</p>
     <p id="error" role="alert"></p>
   </section>
@@ -273,22 +273,22 @@
       const crewCount = Number(crewCountInput.value);
       const impostorCount = Number(impostorCountInput.value);
       const perPage = Number(perPageInput.value);
-      if (!Number.isInteger(crewCount) || crewCount < 0 || crewCount > 20 ||
-          !Number.isInteger(impostorCount) || impostorCount < 0 || impostorCount > 20) {
-        error.textContent = "Introduce cantidades enteras entre 0 y 20 para cada rol.";
+      if (!Number.isSafeInteger(crewCount) || crewCount < 0 ||
+          !Number.isSafeInteger(impostorCount) || impostorCount < 0) {
+        error.textContent = "Introduce cantidades enteras no negativas para cada rol.";
         return;
       }
       const total = crewCount + impostorCount;
-      if (total < 1 || total > 20) {
-        error.textContent = "La suma de tripulantes e impostores debe estar entre 1 y 20.";
+      if (!Number.isSafeInteger(total) || total < 1) {
+        error.textContent = "La suma de tripulantes e impostores debe ser un entero positivo válido.";
         return;
       }
       if (impostorCount === 0 || crewCount === 0) {
         error.textContent = "Para jugar a Among Us debe haber al menos un tripulante y un impostor.";
         return;
       }
-      if (!Number.isInteger(perPage) || perPage < 1 || perPage > 20) {
-        error.textContent = "Indica entre 1 y 20 códigos QR por página.";
+      if (!Number.isSafeInteger(perPage) || perPage < 1) {
+        error.textContent = "Indica un número entero positivo de códigos QR por página.";
         return;
       }
 
