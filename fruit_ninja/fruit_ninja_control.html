@@ -41,9 +41,9 @@ label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:5px}select
 <main>
  <div class="top"><div><h1>🍉 FRUIT NINJA</h1><div class="subtitle">Panel de control del juego · Secuencias, cuenta atrás y bomba</div></div><div class="row"><button class="secondary" id="fullscreenBtn" type="button">⛶ Pantalla completa</button><button class="secondary" id="soundTest">Probar sonidos</button></div></div>
  <section class="panel" id="setup">
-  <h2>1. Frutas y colores de los conos</h2>
+  <h2>1. Frutas y sus objetivos</h2>
   <div class="fruits" id="fruitLegend"></div>
-  <p class="small">Cada fruta corresponde a un único color de cono. La bomba no representa una fruta y tiene su propia alarma.</p>
+  <p class="small">Cada fruta corresponde a un tipo de objetivo. La bomba no representa una fruta y tiene su propia alarma.</p>
  </section>
  <section class="panel" id="editor">
   <h2>2. Diseña la secuencia</h2>
@@ -52,6 +52,7 @@ label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:5px}select
    <div><label for="duration">Duración (segundos)</label><input id="duration" type="number" min="1" max="300" value="8"></div>
    <button id="add">Añadir a la secuencia</button>
   </div>
+  <div style="max-width:220px;margin-top:12px"><label for="countdownStart">Anunciar cuenta atrás desde (segundos)</label><input id="countdownStart" type="number" min="1" max="300" value="5"></div>
   <div class="row" style="justify-content:space-between;margin-top:18px"><strong>Orden de aparición</strong><span class="small" id="count">0 elementos</span></div>
   <div class="sequence" id="sequence"><div class="empty">Todavía no has añadido elementos.</div></div>
   <div class="row" style="margin-top:16px"><button id="load" disabled>▣ Cargar secuencia</button><button class="secondary" id="example">Cargar ejemplo</button><button class="secondary" id="clear">Vaciar secuencia</button></div>
@@ -75,14 +76,14 @@ label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:5px}select
 </main>
 <script>
 const fruits=[
- {id:"apple",name:"Manzana",emoji:"🍎",color:"#e53945",cone:"Rojo"},
- {id:"banana",name:"Plátano",emoji:"🍌",color:"#f5d328",cone:"Amarillo"},
- {id:"kiwi",name:"Kiwi",emoji:"🥝",color:"#54b85b",cone:"Verde"},
- {id:"orange",name:"Naranja",emoji:"🍊",color:"#ff922e",cone:"Naranja"},
- {id:"grapes",name:"Uvas",emoji:"🍇",color:"#9164d8",cone:"Morado"}
+ {id:"apple",name:"Manzana",emoji:"🍎",color:"#e53945",target:"Conos"},
+ {id:"banana",name:"Plátano",emoji:"🍌",color:"#f5d328",target:"Aros"},
+ {id:"kiwi",name:"Kiwi",emoji:"🥝",color:"#54b85b",target:"Ladrillos"},
+ {id:"orange",name:"Naranja",emoji:"🍊",color:"#ff922e",target:"Picas"},
+ {id:"grapes",name:"Uvas",emoji:"🍇",color:"#9164d8",target:"Pelotas"}
 ];
-const bomb={id:"bomb",name:"Bomba",emoji:"💣",color:"#080a0f",cone:"Negro"};
-let sequence=[],index=0,remaining=0,total=0,lastTick=0,raf=null,state="idle",audioCtx=null,lastCountdown=-1;
+const bomb={id:"bomb",name:"Bomba",emoji:"💣",color:"#080a0f"};
+let sequence=[],index=0,remaining=0,total=0,lastTick=0,raf=null,state="idle",audioCtx=null,lastCountdown=-1,bombAlarmInterval=null;
 const $=id=>document.getElementById(id);
 const itemById=id=>id==="bomb"?bomb:fruits.find(f=>f.id===id);
 function activateCurrentAction(){
@@ -91,15 +92,15 @@ function activateCurrentAction(){
  if(button && !$("game").hidden)button.click();
 }
 function renderLegend(){
- $("fruitLegend").innerHTML=fruits.map(f=>`<div class="fruit"><span class="swatch" style="background:${f.color}"></span><div><strong>${f.emoji} ${f.name}</strong><div class="small">Cono ${f.cone.toLowerCase()}</div></div></div>`).join("")+
- `<div class="fruit"><span class="swatch" style="background:${bomb.color}"> </span><div><strong>💣 Bomba</strong><div class="small">No corresponde a ningún cono</div></div></div>`;
- $("itemSelect").innerHTML=fruits.map(f=>`<option value="${f.id}">${f.emoji} ${f.name} · cono ${f.cone}</option>`).join("")+`<option value="bomb">💣 Bomba</option>`;
+ $("fruitLegend").innerHTML=fruits.map(f=>`<div class="fruit"><span class="swatch" style="background:${f.color}"></span><div><strong>${f.emoji} ${f.name}</strong><div class="small">Objeto asociado: ${f.target}</div></div></div>`).join("")+
+  `<div class="fruit"><span class="swatch" style="background:${bomb.color}"> </span><div><strong>💣 Bomba</strong><div class="small">Sin objeto asociado</div></div></div>`;
+  $("itemSelect").innerHTML=fruits.map(f=>`<option value="${f.id}">${f.emoji} ${f.name} · objeto: ${f.target}</option>`).join("")+`<option value="bomb">💣 Bomba</option>`;
 }
 function renderSequence(){
  $("count").textContent=`${sequence.length} ${sequence.length===1?"elemento":"elementos"}`;
  $("load").disabled=!sequence.length;
  if(!sequence.length){$("sequence").innerHTML='<div class="empty">Todavía no has añadido elementos.</div>';return}
- $("sequence").innerHTML=sequence.map((e,i)=>{const f=itemById(e.id);return `<div class="entry"><strong>${i+1}.</strong><div><span class="swatch" style="display:inline-block;vertical-align:middle;background:${f.color}"></span> <strong>${f.emoji} ${f.name}</strong><div class="small">${f.id==="bomb"?"Alarma especial":`Cono ${f.cone}`}</div></div><div class="duration"><label>Segundos</label><input aria-label="Duración del elemento ${i+1}" type="number" min="1" max="300" value="${e.duration}" data-duration="${i}"></div><div class="actions"><button class="secondary" data-up="${i}" ${i===0?"disabled":""}>↑</button> <button class="secondary" data-down="${i}" ${i===sequence.length-1?"disabled":""}>↓</button> <button class="danger" data-remove="${i}">×</button></div></div>`}).join("");
+   $("sequence").innerHTML=sequence.map((e,i)=>{const f=itemById(e.id);return `<div class="entry"><strong>${i+1}.</strong><div><span class="swatch" style="display:inline-block;vertical-align:middle;background:${f.color}"></span> <strong>${f.emoji} ${f.name}${e.id==="bomb"?"":` - ${f.target}`}</strong></div><div class="duration"><label>Segundos</label><input aria-label="Duración del elemento ${i+1}" type="number" min="1" max="300" value="${e.duration}" data-duration="${i}"></div><div class="actions"><button class="secondary" data-up="${i}" ${i===0?"disabled":""}>↑</button> <button class="secondary" data-down="${i}" ${i===sequence.length-1?"disabled":""}>↓</button> <button class="danger" data-remove="${i}">×</button></div></div>`}).join("");
  $("sequence").querySelectorAll("[data-duration]").forEach(el=>el.addEventListener("change",()=>{sequence[+el.dataset.duration].duration=Math.max(1,Math.min(300,+el.value||1));el.value=sequence[+el.dataset.duration].duration}));
  $("sequence").querySelectorAll("[data-up]").forEach(el=>el.addEventListener("click",()=>move(+el.dataset.up,-1)));
  $("sequence").querySelectorAll("[data-down]").forEach(el=>el.addEventListener("click",()=>move(+el.dataset.down,1)));
@@ -109,26 +110,28 @@ function move(i,d){[sequence[i],sequence[i+d]]=[sequence[i+d],sequence[i]];rende
 function audio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume();return audioCtx}
 function tone(freq,duration,type="sine",volume=.16,delay=0){try{const c=audio(),o=c.createOscillator(),g=c.createGain(),t=c.currentTime+delay;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(volume,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+duration+.03)}catch(e){}}
 function alarm(){tone(740,.22,"sawtooth",.18);tone(520,.25,"sawtooth",.18,.28);tone(740,.22,"sawtooth",.18,.58)}
+function startBombAlarm(){stopBombAlarm();alarm();bombAlarmInterval=setInterval(alarm,850)}
+function stopBombAlarm(){if(bombAlarmInterval!==null){clearInterval(bombAlarmInterval);bombAlarmInterval=null}}
 function bell(){tone(880,.55,"sine",.2);tone(1320,.65,"sine",.12,.12)}
 function boom(){tone(95,.9,"sawtooth",.28);tone(55,1.1,"triangle",.24,.06)}
 function speak(text){if(!("speechSynthesis"in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="es-ES";u.rate=.94;u.pitch=1;window.speechSynthesis.speak(u)}
 function formatTime(s){s=Math.max(0,s);return `00:${String(Math.ceil(s)).padStart(2,"0")}`}
 function showGame(){ $("launch").hidden=true;$("game").hidden=false;window.scrollTo({top:0,behavior:"smooth"})}
 function loadSequence(){if(!sequence.length)return;state="ready";$("setup").style.display="none";$("editor").style.display="none";$("soundTest").style.display="none";$("game").hidden=true;$("launch").hidden=false;window.scrollTo({top:0,behavior:"smooth"})}
-function showSetup(){ $("game").hidden=true;$("launch").hidden=true;$("setup").style.display="block";$("editor").style.display="block";$("soundTest").style.display="inline-block";state="idle";if(raf)cancelAnimationFrame(raf)}
+function showSetup(){stopBombAlarm();$("game").hidden=true;$("launch").hidden=true;$("setup").style.display="block";$("editor").style.display="block";$("soundTest").style.display="inline-block";state="idle";if(raf)cancelAnimationFrame(raf)}
 function startSequence(){audio();index=0;state="running";showGame();showCurrent()}
 function showCurrent(){
  if(index>=sequence.length){finish();return}
  const e=sequence[index],f=itemById(e.id);total=e.duration;remaining=total;lastTick=performance.now();lastCountdown=-1;
  $("game").classList.toggle("bomb",e.id==="bomb");$("game").classList.remove("paused");
  $("phaseTag").textContent=e.id==="bomb"?"⚠ PELIGRO · BOMBA":"FRUTA A RECOGER";
- $("itemEmoji").textContent=f.emoji;$("itemName").textContent=f.name;
- $("coneLabel").textContent=`Cono ${f.cone.toLowerCase()}`;
- $("instructions").textContent=e.id==="bomb"?"¡BOMBA! Busca el cono negro y pulsa «Desarmar bomba» antes de que termine el tiempo. Si explota, los equipos que no la desarmen deberán vaciar su bolsa de frutas.":`¡A recoger ${f.name.toLowerCase()}! Busca los conos de color ${f.cone.toLowerCase()}.`;
+  $("itemEmoji").textContent=f.emoji;$("itemName").textContent=e.id==="bomb"?f.name:`${f.name} - ${f.target}`;
+   $("coneLabel").textContent="";
+  $("instructions").textContent=e.id==="bomb"?"¡BOMBA! Cada jugador debe soltar el objeto que lleva y correr hacia su base.":`¡A recoger ${f.name.toLowerCase()}! Busca este objeto: ${f.target.toLowerCase()}.`;
  $("status").textContent=`Elemento ${index+1} de ${sequence.length}`;
- $("gameButtons").innerHTML=e.id==="bomb"?'<button class="good" id="defuse">✓ DESARMAR BOMBA</button>':'<button class="secondary" id="skip">Saltar elemento</button>';
- if(e.id==="bomb"){alarm();speak("Bomba")}else{speak(f.name)}
- $("defuse")?.addEventListener("click",()=>{if(state!=="running")return;bell();advance()});
+  $("gameButtons").innerHTML=e.id==="bomb"?'<button class="good" id="baseReached">✓ TODOS EN LA BASE</button>':'<button class="secondary" id="skip">Saltar elemento</button>';
+  if(e.id==="bomb"){startBombAlarm();speak("Bomba")}else{speak(f.name)}
+  $("baseReached")?.addEventListener("click",()=>{if(state!=="running")return;bell();advance()});
  $("skip")?.addEventListener("click",()=>{if(state!=="running")return;advance()});
  updateTimer();if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(tick);
 }
@@ -138,16 +141,17 @@ function tick(now){
  const elapsed=(now-lastTick)/1000;
  remaining=Math.max(0,remaining-elapsed);lastTick=now;updateTimer();
  const countdownNumber=Math.ceil(remaining);
- if(countdownNumber<=5 && countdownNumber>=1 && countdownNumber!==lastCountdown){
+  const countdownStart=Math.max(1,Math.min(300,+$("countdownStart").value||5));
+  if(countdownNumber<=countdownStart && countdownNumber>=1 && countdownNumber!==lastCountdown){
   lastCountdown=countdownNumber;
-  speak(["","Uno","Dos","Tres","Cuatro","Cinco"][countdownNumber]);
+   speak(String(countdownNumber));
  }
  if(remaining<=0){timeExpired();return}
  raf=requestAnimationFrame(tick)
 }
-function timeExpired(){state="waiting";if(raf)cancelAnimationFrame(raf);const e=sequence[index];if(e.id==="bomb"){boom();$("game").classList.add("paused");$("phaseTag").textContent="💥 ¡BOOM! · BOMBA SIN DESARMAR";$("itemEmoji").textContent="💥";$("itemName").textContent="¡BOMBA EXPLOTADA!";$("instructions").textContent="Los equipos que no hayan desarmado la bomba deben vaciar su bolsa de frutas. Cuando estén preparados, pulsa el botón para continuar."; $("gameButtons").innerHTML='<button id="continue" class="good">Continuar secuencia</button>'; $("status").textContent="Secuencia pausada · esperando al profesor";$("continue").addEventListener("click",()=>{bell();advance()})}else{bell();advance()}}
-function advance(){if(raf)cancelAnimationFrame(raf);index++;state="running";showCurrent()}
-function finish(){state="done";$("game").classList.remove("bomb","paused");$("phaseTag").textContent="SECUENCIA COMPLETADA";$("itemEmoji").textContent="🏆";$("itemName").textContent="¡Buen trabajo!";$("coneLabel").textContent="";$("timer").textContent="00:00";$("fill").style.width="0%";$("instructions").textContent="Habéis completado toda la secuencia."; $("gameButtons").innerHTML='<button id="back" class="good">Volver a la configuración</button>'; $("status").textContent="";bell();$("back").addEventListener("click",showSetup)}
+function timeExpired(){stopBombAlarm();state="waiting";if(raf)cancelAnimationFrame(raf);const e=sequence[index];if(e.id==="bomb"){boom();$("game").classList.add("paused");$("phaseTag").textContent="💥 ¡TIEMPO AGOTADO!";$("itemEmoji").textContent="💥";$("itemName").textContent="¡A LA BASE!";$("instructions").textContent="Cada jugador debe soltar el objeto que lleva y correr hacia su base. Cuando todos estén preparados, pulsa para continuar."; $("gameButtons").innerHTML='<button id="continue" class="good">Continuar secuencia</button>'; $("status").textContent="Secuencia pausada · esperando al profesor";$("continue").addEventListener("click",()=>{bell();advance()})}else{bell();advance()}}
+function advance(){stopBombAlarm();if(raf)cancelAnimationFrame(raf);index++;state="running";showCurrent()}
+function finish(){stopBombAlarm();state="done";$("game").classList.remove("bomb","paused");$("phaseTag").textContent="SECUENCIA COMPLETADA";$("itemEmoji").textContent="🏆";$("itemName").textContent="¡Buen trabajo!";$("coneLabel").textContent="";$("timer").textContent="00:00";$("fill").style.width="0%";$("instructions").textContent="Habéis completado toda la secuencia."; $("gameButtons").innerHTML='<button id="back" class="good">Volver a la configuración</button>'; $("status").textContent="";bell();$("back").addEventListener("click",showSetup)}
 $("fullscreenBtn").addEventListener("click",async()=>{
  try{
   if(!document.fullscreenElement)await document.documentElement.requestFullscreen();
