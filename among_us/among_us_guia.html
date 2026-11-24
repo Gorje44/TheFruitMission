@@ -542,7 +542,7 @@
         state.phase = 2;
         const settings = getSettings();
         updatePreview();
-        showPhase(2, '¡SABOTAJE!', 'Los impostores pueden retirar conos y llevarlos a la caja de sabotaje.', 'phase-sabotage');
+        showPhase(2, '¡SABOTAJE!', '', 'phase-sabotage');
         phaseStatus.textContent = 'La fase terminará automáticamente cuando llegue a cero.';
         speakTitle(phaseTitles.sabotage, () => {
           startCountdown(settings.sabotage, () => {
@@ -558,7 +558,7 @@
         stopSabotageAlarm();
         stopReturnSound();
         const settings = getSettings();
-        showPhase(3, '¡FIN DEL SABOTAJE!', 'Los impostores dejan de retirar conos y regresan a sus posiciones.', 'phase-return');
+        showPhase(3, '¡FIN DEL SABOTAJE!', '', 'phase-return');
         phaseStatus.textContent = 'La cuenta atrás indica el tiempo para volver a las posiciones.';
         playTone(660, 0.35, 'triangle');
         speakTitle(phaseTitles.returning, () => {
