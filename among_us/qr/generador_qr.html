@@ -135,11 +135,6 @@
     <h1>Tarjetas QR · Misión espacial</h1>
     <p class="intro">Configura los roles y la distribución de las tarjetas. Los QR se mezclan automáticamente y no muestran el papel asignado.</p>
 
-    <div class="url-field">
-      <label for="siteUrl">Dirección HTTPS de la página de revelación (<code>index.html</code>)</label>
-      <input id="siteUrl" type="url" placeholder="https://tuusuario.github.io/among-us-roles/" autocomplete="url">
-    </div>
-
     <div class="form-grid" style="margin-top:18px">
       <div class="field">
         <label for="crewCount">Número de tripulantes</label>
@@ -161,7 +156,7 @@
     </div>
     <p id="summary" aria-live="polite"></p>
     <p class="note">Puedes generar tantos participantes como necesites; la suma de tripulantes e impostores determina el total de tarjetas. La impresión está preparada para A4 vertical; en el diálogo del navegador selecciona «Guardar como PDF», escala 100 % y desactiva encabezados y pies de página.</p>
-    <p class="note">El generador necesita conexión a internet para cargar la biblioteca que dibuja los códigos QR. Publica primero <code>index.html</code> en una dirección HTTPS.</p>
+    <p class="note">El generador necesita conexión a internet para cargar la biblioteca que dibuja los códigos QR. Los códigos abrirán la página de revelación publicada en GitHub Pages.</p>
     <p id="error" role="alert"></p>
   </section>
 
@@ -174,9 +169,9 @@
     // Keep this key and payload format in sync with index.html.
     // This is obfuscation for a classroom game, not cryptographic protection.
     const TOKEN_KEY = "MISION-ESPACIAL-QR-2026";
+    const REVEAL_URL = "https://gorje44.github.io/TheFruitMission/among_us/qr/index.html";
     const generateButton = document.getElementById("generateButton");
     const printButton = document.getElementById("printButton");
-    const siteUrlInput = document.getElementById("siteUrl");
     const crewCountInput = document.getElementById("crewCount");
     const impostorCountInput = document.getElementById("impostorCount");
     const perPageInput = document.getElementById("perPage");
@@ -259,16 +254,7 @@
         return;
       }
 
-      let base;
-      try {
-        base = new URL(siteUrlInput.value.trim());
-        if (base.protocol !== "https:") throw new Error("https");
-        base.search = "";
-        base.hash = "";
-      } catch (_) {
-        error.textContent = "Introduce una dirección completa que empiece por https:// y que apunte a index.html o a su carpeta.";
-        return;
-      }
+      const base = new URL(REVEAL_URL);
 
       const crewCount = Number(crewCountInput.value);
       const impostorCount = Number(impostorCountInput.value);
