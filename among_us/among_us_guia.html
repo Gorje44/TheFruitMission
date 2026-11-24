@@ -109,6 +109,9 @@
       width:100%; min-width:0; border:1px solid rgba(174,197,242,.25); border-radius:12px; padding:12px 13px;
       background:#0c1427; color:#fff; font-size:1rem;
     }
+    .range-wrap { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; }
+    .range-wrap input[type=range] { width:100%; accent-color:var(--cyan); }
+    .range-wrap output { min-width:4em; color:#fff; text-align:right; font-variant-numeric:tabular-nums; }
     .unit { color:var(--muted); font-size:.9rem; white-space:nowrap; }
     .preview { margin-top: 19px; padding: 15px; background: rgba(255,255,255,.045); border:1px solid rgba(174,197,242,.13); border-radius:15px; }
     .preview-title { color:#b9c8e5; font-size:.75rem; font-weight:850; letter-spacing:.14em; text-transform:uppercase; margin-bottom:10px; }
@@ -128,7 +131,7 @@
     .timer.urgent { border-color:rgba(255,104,120,.75); background:radial-gradient(circle,rgba(255,104,120,.17),rgba(255,104,120,.025) 68%); box-shadow:0 0 40px rgba(255,104,120,.14), inset 0 0 30px rgba(255,104,120,.07); animation:pulse .7s ease-in-out infinite alternate; }
     @keyframes pulse { to { transform:scale(1.025); } }
     .timer-number { font-size:clamp(4rem, 12vw, 6.2rem); font-weight:950; letter-spacing:-.07em; font-variant-numeric:tabular-nums; line-height:1; }
-    .timer-label { color:#aebdda; font-size:.76rem; text-transform:uppercase; letter-spacing:.18em; font-weight:800; margin-top:-23px; }
+    .timer-label { color:#aebdda; font-size:.76rem; text-transform:uppercase; letter-spacing:.18em; font-weight:800; margin-top:2px; }
     .phase-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:28px; }
     .phase-actions button { min-width:190px; }
     .status-line { color:#99aacb; font-size:.82rem; margin:17px 0 0; min-height:1.3em; }
@@ -205,28 +208,42 @@
       <aside class="card settings">
         <p class="eyebrow">Configuración</p>
         <h2>Duración de las fases</h2>
-        <p class="hint">Ajusta los tiempos antes de iniciar. Se mostrarán en la cuenta atrás durante el juego.</p>
+        <p class="hint">Ajusta los tiempos y el inicio de los avisos hablados antes de comenzar.</p>
 
         <div class="field">
           <label for="sabotageSeconds">Fase 2 · Sabotaje <span>Tiempo para retirar conos</span></label>
-          <div class="number-wrap"><input id="sabotageSeconds" type="number" min="5" max="120" step="1" value="10"><span class="unit">segundos</span></div>
+          <div class="number-wrap"><input id="sabotageSeconds" type="number" min="1" step="1" value="10"><span class="unit">segundos</span></div>
+        </div>
+        <div class="field">
+          <label for="countdownVoiceSeconds">Anunciar cuenta atrás desde <span>También activa el rojo</span></label>
+          <div class="number-wrap"><input id="countdownVoiceSeconds" type="number" min="1" step="1" value="5"><span class="unit">segundos</span></div>
         </div>
         <div class="field">
           <label for="returnSeconds">Fase 3 · Regreso a posiciones <span>Tiempo para volver</span></label>
-          <div class="number-wrap"><input id="returnSeconds" type="number" min="5" max="60" step="1" value="5"><span class="unit">segundos</span></div>
+          <div class="number-wrap"><input id="returnSeconds" type="number" min="1" step="1" value="5"><span class="unit">segundos</span></div>
+        </div>
+        <div class="field">
+          <label for="returnCountdownVoiceSeconds">Fase 3 · Anunciar cuenta atrás desde <span>También activa el rojo</span></label>
+          <div class="number-wrap"><input id="returnCountdownVoiceSeconds" type="number" min="1" step="1" value="5"><span class="unit">segundos</span></div>
+        </div>
+        <div class="field">
+          <label for="speechRate">Velocidad de voz</label>
+          <div class="range-wrap"><input id="speechRate" type="range" min="0.7" max="3" step="0.1" value="2"><output id="speechRateValue" for="speechRate">2×</output></div>
         </div>
         <div class="preview">
           <div class="preview-title">Resumen de la secuencia</div>
           <div class="preview-row"><span>1. ¡Alerta!</span><strong>Manual</strong></div>
-          <div class="preview-row"><span>2. ¡Sabotaje!</span><strong id="sabotagePreview">10 s</strong></div>
+          <div class="preview-row"><span>2. Empieza el sabotaje</span><strong id="sabotagePreview">10 s</strong></div>
+          <div class="preview-row"><span>Voz y rojo desde</span><strong id="countdownVoicePreview">5 s</strong></div>
           <div class="preview-row"><span>3. ¡Fin del sabotaje!</span><strong id="returnPreview">5 s</strong></div>
+          <div class="preview-row"><span>Voz y rojo en fase 3 desde</span><strong id="returnCountdownVoicePreview">5 s</strong></div>
           <div class="preview-row"><span>4. ¡Continuad!</span><strong>Automática</strong></div>
         </div>
         <div class="settings-actions">
-          <button class="secondary-btn" id="saveSettings" type="button">Guardar tiempos</button>
+          <button class="secondary-btn" id="saveSettings" type="button">Guardar ajustes</button>
           <button class="danger-btn" id="resetBtn" type="button">■ Detener / Reiniciar</button>
         </div>
-        <p class="note">Solo se leen en voz alta los títulos de las fases. Las alarmas y campanas se generan en el navegador, sin archivos externos. Comprueba el volumen antes de empezar.</p>
+        <p class="note">Se leen en voz alta los avisos de fase y las cuentas atrás de las fases 2 y 3 desde el segundo configurado. La alarma se atenuará durante la voz. Comprueba el volumen antes de empezar.</p>
       </aside>
     </div>
     <p class="footer">Herramienta de apoyo para la actividad física · Utiliza el ordenador del profesor conectado a la televisión.</p>
@@ -246,22 +263,29 @@
       const timerNumber = $('timerNumber');
       const phaseActions = $('phaseActions');
       const sabotageInput = $('sabotageSeconds');
+      const countdownVoiceInput = $('countdownVoiceSeconds');
       const returnInput = $('returnSeconds');
+      const returnCountdownVoiceInput = $('returnCountdownVoiceSeconds');
+      const speechRateInput = $('speechRate');
+      const speechRateValue = $('speechRateValue');
       const sabotagePreview = $('sabotagePreview');
+      const countdownVoicePreview = $('countdownVoicePreview');
       const returnPreview = $('returnPreview');
+      const returnCountdownVoicePreview = $('returnCountdownVoicePreview');
       const progress = [1,2,3,4].map(n => $('progress' + n));
-      const state = { phase: 0, interval: null, timeout: null, endAt: 0, settingsLocked: false };
+      const state = { phase: 0, interval: null, timeout: null, alarmInterval: null, returnSoundInterval: null, alarmGain: null, returnSoundGain: null, speechId: 0, speechActive: false, endAt: 0, settingsLocked: false };
 
       const phaseTitles = {
-        alert: 'Alerta',
-        sabotage: 'Sabotaje',
-        returning: 'Fin del sabotaje',
-        resume: 'Continuad la misión'
+        alert: 'Alerta. Cerrad los ojos todos.',
+        sabotage: 'Empieza el sabotaje. Impostores, empezad a correr.',
+        returning: 'Fin del sabotaje. Volved a vuestras posiciones.',
+        resume: 'Continuad la misión. Abrid los ojos.'
       };
+      const COUNTDOWN_SPEECH_RATE = 0.92;
 
       // Short synthesized sound effects: no external audio files or Internet required.
       let audioContext = null;
-      function playTone(frequency, duration, type = 'sine', volume = 0.16, delay = 0) {
+      function playTone(frequency, duration, type = 'sine', volume = 0.16, delay = 0, output = null) {
         try {
           const AudioContextClass = window.AudioContext || window.webkitAudioContext;
           if (!AudioContextClass) return;
@@ -276,9 +300,17 @@
           gain.gain.exponentialRampToValueAtTime(volume, start + 0.025);
           gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
           oscillator.connect(gain);
-          gain.connect(audioContext.destination);
+          gain.connect(output || audioContext.destination);
           oscillator.start(start);
           oscillator.stop(start + duration + 0.03);
+        } catch (_) { /* sound effects are optional */ }
+      }
+
+      function setReturnSoundVolume(volume) {
+        if (!state.returnSoundGain || !audioContext) return;
+        try {
+          state.returnSoundGain.gain.cancelScheduledValues(audioContext.currentTime);
+          state.returnSoundGain.gain.setTargetAtTime(volume, audioContext.currentTime, 0.04);
         } catch (_) { /* sound effects are optional */ }
       }
 
@@ -287,30 +319,107 @@
           playTone(index % 2 ? 760 : 980, 0.22, 'square', 0.10, delay));
       }
 
+      function setSabotageAlarmVolume(volume) {
+        if (!state.alarmGain || !audioContext) return;
+        try {
+          state.alarmGain.gain.cancelScheduledValues(audioContext.currentTime);
+          state.alarmGain.gain.setTargetAtTime(volume, audioContext.currentTime, 0.04);
+        } catch (_) { /* sound effects are optional */ }
+      }
+
+      function startSabotageAlarm() {
+        stopSabotageAlarm();
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          audioContext = audioContext || new AudioContextClass();
+          if (audioContext.state === 'suspended') audioContext.resume();
+          state.alarmGain = audioContext.createGain();
+          state.alarmGain.gain.value = 0.72;
+          state.alarmGain.connect(audioContext.destination);
+          let toneIndex = 0;
+          const ring = () => {
+            if (state.phase !== 1 && state.phase !== 2) return;
+            playTone(toneIndex++ % 2 ? 760 : 980, 0.32, 'square', 0.12, 0, state.alarmGain);
+          };
+          ring();
+          state.alarmInterval = window.setInterval(ring, 520);
+        } catch (_) { /* sound effects are optional */ }
+      }
+
+      function stopSabotageAlarm() {
+        if (state.alarmInterval) window.clearInterval(state.alarmInterval);
+        state.alarmInterval = null;
+        setSabotageAlarmVolume(0);
+        state.alarmGain = null;
+      }
+
+      function startReturnSound() {
+        stopReturnSound();
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          audioContext = audioContext || new AudioContextClass();
+          if (audioContext.state === 'suspended') audioContext.resume();
+          state.returnSoundGain = audioContext.createGain();
+          state.returnSoundGain.gain.value = 0.72;
+          state.returnSoundGain.connect(audioContext.destination);
+          let noteIndex = 0;
+          state.returnSoundInterval = window.setInterval(() => {
+            if (state.phase !== 3) return;
+            playTone(noteIndex++ % 2 ? 659 : 784, 0.38, 'sine', 0.14, 0, state.returnSoundGain);
+          }, 850);
+        } catch (_) { /* sound effects are optional */ }
+      }
+
+      function stopReturnSound() {
+        if (state.returnSoundInterval) window.clearInterval(state.returnSoundInterval);
+        state.returnSoundInterval = null;
+        setReturnSoundVolume(0);
+        state.returnSoundGain = null;
+      }
+
       function playBell() {
         playTone(880, 0.65, 'sine', 0.18, 0);
         playTone(1320, 0.75, 'sine', 0.11, 0.08);
       }
 
-      function getSeconds(input, min, max, fallback) {
-        const raw = Number.parseInt(input.value, 10);
-        if (!Number.isFinite(raw)) return fallback;
-        return Math.min(max, Math.max(min, raw));
+      function getSeconds(input, fallback) {
+        const raw = Number(input.value);
+        if (!Number.isFinite(raw) || raw <= 0) return fallback;
+        return Math.max(1, Math.floor(raw));
+      }
+
+      function getSpeechRate() {
+        const rate = Number(speechRateInput.value);
+        if (!Number.isFinite(rate)) return 2;
+        return Math.min(3, Math.max(0.7, rate));
       }
 
       function getSettings() {
+        const sabotage = getSeconds(sabotageInput, 10);
+        const returning = getSeconds(returnInput, 5);
         return {
-          sabotage: getSeconds(sabotageInput, 5, 120, 10),
-          returning: getSeconds(returnInput, 5, 60, 5)
+          sabotage,
+          announceFrom: getSeconds(countdownVoiceInput, 5),
+          returning,
+          announceReturnFrom: getSeconds(returnCountdownVoiceInput, 5),
+          speechRate: getSpeechRate()
         };
       }
 
       function updatePreview() {
         const settings = getSettings();
         sabotageInput.value = settings.sabotage;
+        countdownVoiceInput.value = settings.announceFrom;
         returnInput.value = settings.returning;
+        returnCountdownVoiceInput.value = settings.announceReturnFrom;
+        speechRateInput.value = settings.speechRate;
         sabotagePreview.textContent = `${settings.sabotage} s`;
+        countdownVoicePreview.textContent = `${settings.announceFrom} s`;
         returnPreview.textContent = `${settings.returning} s`;
+        returnCountdownVoicePreview.textContent = `${settings.announceReturnFrom} s`;
+        speechRateValue.textContent = `${settings.speechRate.toLocaleString('es-ES', { maximumFractionDigits: 2 })}×`;
         try { localStorage.setItem('amongUsGuideSettings', JSON.stringify(settings)); } catch (_) { /* storage is optional */ }
       }
 
@@ -318,7 +427,12 @@
         try {
           const saved = JSON.parse(localStorage.getItem('amongUsGuideSettings') || 'null');
           if (saved && Number.isFinite(saved.sabotage)) sabotageInput.value = saved.sabotage;
+          if (saved && Number.isFinite(saved.announceFrom)) countdownVoiceInput.value = saved.announceFrom;
           if (saved && Number.isFinite(saved.returning)) returnInput.value = saved.returning;
+          if (saved && Number.isFinite(saved.announceReturnFrom)) returnCountdownVoiceInput.value = saved.announceReturnFrom;
+          if (saved && Number.isFinite(saved.speechRate)) {
+            speechRateInput.value = saved.speechRate === 1.15 ? 2 : saved.speechRate;
+          }
         } catch (_) { /* ignore malformed saved settings */ }
         updatePreview();
       }
@@ -330,11 +444,16 @@
         state.timeout = null;
       }
 
-      function speakTitle(text, onEnd) {
+      function speakTitle(text, onEnd, rate = getSpeechRate()) {
+        const speechId = ++state.speechId;
         let finished = false;
         const done = () => {
           if (finished) return;
           finished = true;
+          if (speechId !== state.speechId) return;
+          state.speechActive = false;
+          setSabotageAlarmVolume(0.72);
+          setReturnSoundVolume(0.72);
           if (typeof onEnd === 'function') onEnd();
         };
         if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
@@ -342,21 +461,26 @@
           window.setTimeout(done, 1800);
           return;
         }
+        state.speechActive = true;
+        setSabotageAlarmVolume(0.22);
+        setReturnSoundVolume(0.22);
         try {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.lang = 'es-ES';
-          utterance.rate = 0.92;
+          utterance.rate = rate;
           utterance.pitch = 1;
           utterance.volume = 1;
           utterance.onend = done;
-          utterance.onerror = () => {
-            phaseStatus.textContent = 'No se pudo reproducir el título de la fase.';
+          utterance.onerror = (event) => {
+            if (speechId === state.speechId && event.error !== 'canceled' && event.error !== 'interrupted') {
+              phaseStatus.textContent = 'No se pudo reproducir el aviso de voz.';
+            }
             done();
           };
           window.speechSynthesis.speak(utterance);
         } catch (_) {
-          phaseStatus.textContent = 'No se pudo reproducir el título de la fase.';
+          phaseStatus.textContent = 'No se pudo reproducir el aviso de voz.';
           window.setTimeout(done, 1200);
         }
       }
@@ -377,9 +501,10 @@
         phaseActions.innerHTML = '';
       }
 
-      function startCountdown(seconds, onComplete) {
+      function startCountdown(seconds, onComplete, { announceFrom = null, urgentAt = 3 } = {}) {
         stopTimers();
         let remaining = seconds;
+        let lastAnnounced = null;
         state.endAt = Date.now() + seconds * 1000;
         timerBox.classList.remove('hidden');
         timerBox.classList.remove('urgent');
@@ -387,7 +512,11 @@
         const tick = () => {
           remaining = Math.max(0, Math.ceil((state.endAt - Date.now()) / 1000));
           timerNumber.textContent = remaining;
-          timerBox.classList.toggle('urgent', remaining <= 3);
+          timerBox.classList.toggle('urgent', remaining <= urgentAt);
+          if (announceFrom !== null && remaining > 0 && remaining <= announceFrom && remaining !== lastAnnounced) {
+            lastAnnounced = remaining;
+            speakTitle(String(remaining), null, COUNTDOWN_SPEECH_RATE);
+          }
           if (remaining <= 0) {
             stopTimers();
             onComplete();
@@ -399,39 +528,53 @@
       function beginAlert() {
         state.phase = 1;
         stopTimers();
+        stopSabotageAlarm();
         setSettingsLocked(true);
         showPhase(1, '¡ALERTA!', 'Todos los participantes se quedan quietos. Los tripulantes cierran los ojos y esperan la siguiente indicación.', 'phase-alert');
         phaseActions.innerHTML = '<button class="primary-btn" id="nextBtn" type="button">Iniciar sabotaje →</button>';
         $('nextBtn').addEventListener('click', beginSabotage);
         phaseStatus.textContent = 'Pulsa el botón cuando todos estén quietos y los tripulantes tengan los ojos cerrados.';
-        playAlarm();
+        startSabotageAlarm();
         speakTitle(phaseTitles.alert);
       }
 
       function beginSabotage() {
         state.phase = 2;
-        const seconds = getSettings().sabotage;
+        const settings = getSettings();
         updatePreview();
         showPhase(2, '¡SABOTAJE!', 'Los impostores pueden retirar conos y llevarlos a la caja de sabotaje.', 'phase-sabotage');
         phaseStatus.textContent = 'La fase terminará automáticamente cuando llegue a cero.';
-        playAlarm();
-        speakTitle(phaseTitles.sabotage);
-        startCountdown(seconds, () => { playBell(); beginReturn(); });
+        speakTitle(phaseTitles.sabotage, () => {
+          startCountdown(settings.sabotage, () => {
+            stopSabotageAlarm();
+            playBell();
+            beginReturn();
+          }, { announceFrom: settings.announceFrom, urgentAt: settings.announceFrom });
+        });
       }
 
       function beginReturn() {
         state.phase = 3;
-        const seconds = getSettings().returning;
+        stopSabotageAlarm();
+        stopReturnSound();
+        const settings = getSettings();
         showPhase(3, '¡FIN DEL SABOTAJE!', 'Los impostores dejan de retirar conos y regresan a sus posiciones.', 'phase-return');
         phaseStatus.textContent = 'La cuenta atrás indica el tiempo para volver a las posiciones.';
         playTone(660, 0.35, 'triangle');
-        speakTitle(phaseTitles.returning);
-        startCountdown(seconds, () => { playBell(); beginResume(); });
+        speakTitle(phaseTitles.returning, () => {
+          startReturnSound();
+          startCountdown(settings.returning, () => {
+            stopReturnSound();
+            playBell();
+            beginResume();
+          }, { announceFrom: settings.announceReturnFrom, urgentAt: settings.announceReturnFrom });
+        });
       }
 
       function beginResume() {
         state.phase = 4;
         stopTimers();
+        stopReturnSound();
         showPhase(4, '¡CONTINUAD LA MISIÓN!', 'Todos pueden abrir los ojos y continuar colocando conos en la zona de juego.', 'phase-resume');
         phaseStatus.textContent = 'La pantalla volverá al inicio automáticamente.';
         playBell();
@@ -444,7 +587,11 @@
 
       function returnHome() {
         stopTimers();
+        stopSabotageAlarm();
+        stopReturnSound();
         setSettingsLocked(false);
+        state.speechId++;
+        state.speechActive = false;
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         state.phase = 0;
         phaseScreen.classList.add('hidden');
@@ -457,7 +604,10 @@
       function setSettingsLocked(locked) {
         state.settingsLocked = locked;
         sabotageInput.disabled = locked;
+        countdownVoiceInput.disabled = locked;
         returnInput.disabled = locked;
+        returnCountdownVoiceInput.disabled = locked;
+        speechRateInput.disabled = locked;
         $('saveSettings').disabled = locked;
         $('startBtn').disabled = locked;
         $('emergencyReset').classList.toggle('hidden', !locked);
@@ -475,12 +625,18 @@
       $('saveSettings').addEventListener('click', () => {
         if (state.phase !== 0) return showToast('Vuelve al inicio para cambiar los tiempos.');
         updatePreview();
-        showToast('Tiempos guardados.');
+         showToast('Tiempos y avisos guardados.');
       });
       sabotageInput.addEventListener('change', updatePreview);
+      countdownVoiceInput.addEventListener('change', updatePreview);
       returnInput.addEventListener('change', updatePreview);
+      returnCountdownVoiceInput.addEventListener('change', updatePreview);
+      speechRateInput.addEventListener('input', updatePreview);
+      speechRateInput.addEventListener('change', updatePreview);
       sabotageInput.addEventListener('input', updatePreview);
+      countdownVoiceInput.addEventListener('input', updatePreview);
       returnInput.addEventListener('input', updatePreview);
+      returnCountdownVoiceInput.addEventListener('input', updatePreview);
       const resetSequence = () => {
         returnHome();
         showToast('Secuencia detenida. Preparado para empezar.');
