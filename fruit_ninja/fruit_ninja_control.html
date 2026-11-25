@@ -55,7 +55,7 @@ label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:5px}select
   <div style="max-width:220px;margin-top:12px"><label for="countdownStart">Anunciar cuenta atrás desde (segundos)</label><input id="countdownStart" type="number" min="1" max="300" value="5"></div>
   <div class="row" style="justify-content:space-between;margin-top:18px"><strong>Orden de aparición</strong><span class="small" id="count">0 elementos</span></div>
   <div class="sequence" id="sequence"><div class="empty">Todavía no has añadido elementos.</div></div>
-  <div class="row" style="margin-top:16px"><button id="load" disabled>▣ Cargar secuencia</button><button class="secondary" id="example">Cargar ejemplo</button><button class="secondary" id="clear">Vaciar secuencia</button></div>
+  <div class="row" style="margin-top:16px"><button id="load" disabled>▣ Cargar secuencia</button><div><label for="presetSelect">Secuencia precargada</label><select id="presetSelect"></select></div><button class="secondary" id="loadPreset">Cargar selección</button><button class="secondary" id="clear">Vaciar secuencia</button></div>
   <p class="small">Puedes mezclar frutas y bombas, cambiar su duración y modificar el orden antes de cargarla. Al cargarla, el orden queda oculto en pantalla.</p>
  </section>
  <section class="panel" id="launch" hidden>
@@ -83,6 +83,18 @@ const fruits=[
  {id:"grapes",name:"Uvas",emoji:"🍇",color:"#9164d8",target:"Pelotas"}
 ];
 const bomb={id:"bomb",name:"Bomba",emoji:"💣",color:"#080a0f"};
+const presetSequences=[
+ [{id:"apple",duration:8},{id:"banana",duration:7},{id:"kiwi",duration:9},{id:"orange",duration:5},{id:"grapes",duration:9},{id:"kiwi",duration:7},{id:"orange",duration:5}],
+ [{id:"banana",duration:6},{id:"kiwi",duration:10},{id:"grapes",duration:12},{id:"apple",duration:5},{id:"kiwi",duration:7},{id:"orange",duration:10}],
+ [{id:"banana",duration:9},{id:"kiwi",duration:10},{id:"apple",duration:7},{id:"orange",duration:10},{id:"grapes",duration:6},{id:"apple",duration:8}],
+ [{id:"apple",duration:8},{id:"banana",duration:8},{id:"kiwi",duration:9},{id:"orange",duration:8},{id:"grapes",duration:8},{id:"banana",duration:9}],
+ [{id:"apple",duration:5},{id:"orange",duration:10},{id:"banana",duration:8},{id:"kiwi",duration:12},{id:"grapes",duration:5},{id:"banana",duration:10}],
+ [{id:"banana",duration:8},{id:"apple",duration:8},{id:"bomb",duration:7},{id:"kiwi",duration:9},{id:"orange",duration:10},{id:"grapes",duration:8}],
+ [{id:"apple",duration:10},{id:"banana",duration:5},{id:"kiwi",duration:6},{id:"orange",duration:8},{id:"bomb",duration:6},{id:"grapes",duration:7},{id:"orange",duration:8}],
+ [{id:"apple",duration:9},{id:"bomb",duration:8},{id:"banana",duration:6},{id:"kiwi",duration:10},{id:"orange",duration:7},{id:"grapes",duration:10}],
+ [{id:"kiwi",duration:7},{id:"apple",duration:9},{id:"orange",duration:5},{id:"banana",duration:12},{id:"bomb",duration:7},{id:"grapes",duration:10}],
+ [{id:"banana",duration:7},{id:"kiwi",duration:3},{id:"apple",duration:10},{id:"grapes",duration:10},{id:"orange",duration:10},{id:"bomb",duration:10}]
+];
 let sequence=[],index=0,remaining=0,total=0,lastTick=0,raf=null,state="idle",audioCtx=null,lastCountdown=-1,bombAlarmInterval=null;
 const $=id=>document.getElementById(id);
 const itemById=id=>id==="bomb"?bomb:fruits.find(f=>f.id===id);
@@ -95,6 +107,7 @@ function renderLegend(){
  $("fruitLegend").innerHTML=fruits.map(f=>`<div class="fruit"><span class="swatch" style="background:${f.color}"></span><div><strong>${f.emoji} ${f.name}</strong><div class="small">Objeto asociado: ${f.target}</div></div></div>`).join("")+
   `<div class="fruit"><span class="swatch" style="background:${bomb.color}"> </span><div><strong>💣 Bomba</strong><div class="small">Sin objeto asociado</div></div></div>`;
   $("itemSelect").innerHTML=fruits.map(f=>`<option value="${f.id}">${f.emoji} ${f.name} · objeto: ${f.target}</option>`).join("")+`<option value="bomb">💣 Bomba</option>`;
+   $("presetSelect").innerHTML=presetSequences.map((_,i)=>`<option value="${i}">Secuencia ${i+1}</option>`).join("");
 }
 function renderSequence(){
  $("count").textContent=`${sequence.length} ${sequence.length===1?"elemento":"elementos"}`;
@@ -169,7 +182,7 @@ document.addEventListener("keydown",event=>{
 $("add").addEventListener("click",()=>{sequence.push({id:$("itemSelect").value,duration:Math.max(1,Math.min(300,+$("duration").value||8))});renderSequence()});
 $("load").addEventListener("click",loadSequence);$("start").addEventListener("click",startSequence);
 $("clear").addEventListener("click",()=>{sequence=[];renderSequence()});
-$("example").addEventListener("click",()=>{sequence=[{id:"apple",duration:8},{id:"banana",duration:8},{id:"bomb",duration:7},{id:"kiwi",duration:9},{id:"orange",duration:8},{id:"grapes",duration:8}];renderSequence()});
+$("loadPreset").addEventListener("click",()=>{const i=Math.max(0,Math.min(presetSequences.length-1,Number($("presetSelect").value)||0));sequence=presetSequences[i].map(e=>({...e}));loadSequence()});
 $("soundTest").addEventListener("click",()=>{audio();speak("Manzana");setTimeout(alarm,900);setTimeout(bell,2100);setTimeout(boom,3200)});
 renderLegend();renderSequence();
 </script>
